@@ -131,8 +131,8 @@ public class Game {
             @Override
             public void run() {
                 waitingParticipants.addAll(playingParticipants);
+                waitingParticipants.forEach(participant -> participant.getStats().reset());
                 playingParticipants.clear();
-
                 init();
             }
         }.runTaskLater(plugin, 20 * 5);

@@ -17,10 +17,15 @@ public class GameParticipantStats {
     }
 
     public void removePoints(int points) {
-         this.points = Math.max(0, this.points - points);
+        this.points = Math.max(0, this.points - points);
     }
 
     public int calculatePoints(GameParticipant victim) {
         return 12 + (3 * (Math.max(1, victim.getStats().getLevel() - level)));
+    }
+
+    public void reset() {
+        level = 0;
+        points = 0;
     }
 }
