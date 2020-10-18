@@ -29,6 +29,7 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.yaml:snakeyaml:1.26" level="project" />
     <orderEntry type="library" name="Maven: me.ponktacology:simpleconfig:1.0" level="project" />
     <orderEntry type="library" name="Maven: com.jonahseguin:drink:1.0.1" level="project" />
-    <orderEntry type="library" name="Maven: com.github.ThatKawaiiSam:Assemble:105d9baddc" level="project" />
+    <orderEntry type="library" name="Maven: io.github.thatkawaiisam:assemble:1.0-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.wimbli.WorldBorder:WorldBorder:1.9.10 (beta)" level="project" />
   </component>
 </module>

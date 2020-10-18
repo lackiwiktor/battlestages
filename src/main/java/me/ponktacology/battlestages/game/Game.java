@@ -3,105 +3,136 @@ package me.ponktacology.battlestages.game;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import me.ponktacology.battlestages.participant.GameParticipant;
 import me.ponktacology.battlestages.participant.GameParticipantState;
+import me.ponktacology.battlestages.participant.stats.GameParticipantStats;
+import me.ponktacology.battlestages.util.ColorUtil;
+import me.ponktacology.battlestages.util.FireworkUtil;
+import me.ponktacology.battlestages.util.ItemStackUtil;
+import me.ponktacology.battlestages.util.MathUtil;
 import me.ponktacology.simpleconfig.config.annotation.Configurable;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
 @RequiredArgsConstructor
 public class Game {
 
-    @Configurable
-    private static final int MAX_PLAYERS = 50;
+    @Configurable(fileName = "items.yml", save = true)
+    public static List<ItemStack> ITEMS = new ArrayList<>();
 
     @Configurable
-    private static final int MIN_PLAYERS_TO_START = 2;
+    private static int MAX_PLAYERS = 50;
 
     @Configurable
-    private static final int MAX_GAME_TIME = 20 * 60 * 1000; //Value in minutes converted to milliseconds
+    private static int MIN_PLAYERS_TO_START = 2;
 
     @Configurable
-    private static final int BASE_MAP_SIZE = 20;
+    private static int MAX_GAME_TIME = 20 * 60 * 1000; //in millis
 
     @Configurable
-    private static final int MAP_SIZE_ADDITION_PER_PLAYER = 5;
+    private static int BASE_MAP_SIZE = 20;
 
     @Configurable
-    @Setter
-    private static Location gameLocation = new Location(Bukkit.getWorld("world"), 0, 100, 0, 90F, 90F);
+    private static int MAP_SIZE_ADDITION_PER_PLAYER = 5;
 
-    @Configurable
-    @Setter
-    private static Location waitingLocation = new Location(Bukkit.getWorld("world"), 0, 100, 0, 90F, 90F);
+    @Configurable(save = true)
+    public static Location GAME_LOCATION = new Location(Bukkit.getWorld("world"), 0, 100, 0, 90F, 90F);
+
+    @Configurable(save = true)
+    public static Location WAITING_LOCATION = new Location(Bukkit.getWorld("world"), 0, 100, 0, 90F, 90F);
 
     private final JavaPlugin plugin;
     private final Set<GameParticipant> waitingParticipants = new HashSet<>();
-    private final Set<GameParticipant> spectatingParticipants = new HashSet<>();
     private final Set<GameParticipant> playingParticipants = new HashSet<>();
     private GameState state = GameState.WAITING_FOR_PLAYERS;
     private long startTimeStamp;
 
     public void init() {
+        state = GameState.WAITING_FOR_PLAYERS;
         (new BukkitRunnable() {
             @Override
             public void run() {
                 switch (state) {
                     case WAITING_FOR_PLAYERS: {
+                        World world = GAME_LOCATION.getWorld();
+                        WorldBorder border = world.getWorldBorder();
+                        border.reset();
+
                         if (getWaitingParticipantsSize() >= MIN_PLAYERS_TO_START) {
                             start();
                         } else {
-                            getPlayingParticipants().forEach(player -> {
-                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                                        TextComponent.fromLegacyText(String.format("Waiting for %d more players before starting...", MIN_PLAYERS_TO_START - getWaitingParticipantsSize())));
-                            });
+                            getWaitingParticipantsPlayer().forEach(player -> player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                                    TextComponent.fromLegacyText(ColorUtil.color("&eWaiting for " + (MIN_PLAYERS_TO_START - getWaitingParticipantsSize()) + " more players before starting..."))));
                         }
                         break;
                     }
                     case RUNNING: {
-                        if (System.currentTimeMillis() - (startTimeStamp + MAX_GAME_TIME) <= 0) {
+                        if ((startTimeStamp + MAX_GAME_TIME) - System.currentTimeMillis() <= 0) {
                             cancel();
-                            end();
+                            end(null);
+                            return;
+                        }
+
+                        World world = GAME_LOCATION.getWorld();
+                        WorldBorder border = world.getWorldBorder();
+                        double oldSize = border.getSize();
+                        border.setSize(mapSize() * 2);
+                        border.setCenter(GAME_LOCATION.getX(), GAME_LOCATION.getZ());
+
+                        if (oldSize > border.getSize()) {
+                            getPlayingParticipantsPlayer().stream().filter(player -> !border.isInside(player.getLocation())).forEach(player ->
+                                    teleportPlayerToRandomLocation(player));
                         }
                         break;
                     }
                 }
-
             }
-        }).runTaskTimer(plugin, 0, 20 * 5);
+        }).runTaskTimer(plugin, 0, 20);
     }
 
     public void start() {
-        state = GameState.RUNNING;
         startTimeStamp = System.currentTimeMillis();
+        state = GameState.RUNNING;
 
-        for (GameParticipant participant : waitingParticipants) {
-            Player player = participant.getPlayer();
-            if (player == null) continue;
-
-            addParticipant(participant);
-        }
+        getWaitingParticipants().forEach(this::addParticipant);
 
         waitingParticipants.clear();
     }
 
-    public void end() {
+    public void end(GameParticipant winner) {
+        state = GameState.ENDING;
 
+        if (winner == null) {
+            winner = playingParticipants.stream().min((o1, o2) -> -(o1.getStats().getPoints() - o2.getStats().getPoints())).orElse(null);
+        }
+
+        if (winner != null) {
+            Player winnerPlayer = winner.getPlayer();
+
+            getPlayingParticipantsPlayer().forEach(player ->
+                    player.sendTitle(ColorUtil.color("&a&lGAME ENDED"), ColorUtil.color("&6&l" + winnerPlayer.getName() + " WON!"), 10, 20 * 5, 10));
+
+            FireworkUtil.spawnFireworks(winnerPlayer.getLocation(), 30);
+        }
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                waitingParticipants.addAll(playingParticipants);
+                playingParticipants.clear();
+
+                init();
+            }
+        }.runTaskLater(plugin, 20 * 5);
     }
 
     public void addParticipant(GameParticipant participant) {
@@ -111,31 +142,72 @@ public class Game {
                 break;
             }
             case RUNNING: {
+                Player player = participant.getPlayer();
+                if (player == null) return;
                 if (getPlayingParticipantsSize() < MAX_PLAYERS) {
-                    Player player = participant.getPlayer();
-                    if (player == null) return;
-
                     participant.setState(GameParticipantState.PLAYING);
-
-                    int mapSize = mapSize();
-
-                    GameParticipant.reset(player);
-                    player.teleport(gameLocation.add(getRandomNumber(-mapSize, mapSize), 10, getRandomNumber(-mapSize, mapSize)));
-                    player.getInventory().addItem(new ItemStack(Material.WOODEN_SWORD));
-
                     playingParticipants.add(participant);
+                    setupPlayer(player);
                 } else {
-                    addSpectator(participant);
+                    player.kickPlayer(ColorUtil.color("&cGame is full."));
                 }
                 break;
             }
         }
+
+        participant.setupVisibilityAndTag(this);
+    }
+
+    public void setupPlayer(Player player) {
+        GameParticipant.reset(player);
+        teleportPlayerToRandomLocation(player);
+        ItemStack item = new ItemStack(Material.WOODEN_SWORD);
+        ItemStackUtil.makeUnbreakable(item);
+        player.getInventory().addItem(item);
+    }
+
+    public void teleportPlayerToRandomLocation(Player player) {
+        int mapSize = mapSize();
+
+        int x = MathUtil.getRandomNumber(-mapSize, mapSize);
+        int z = MathUtil.getRandomNumber(-mapSize, mapSize);
+
+        Location location = GAME_LOCATION.clone().add(x, 0, z);
+        location.setY(player.getWorld().getHighestBlockYAt(x, z));
+        location.setYaw(player.getLocation().getYaw());
+        location.setPitch(player.getLocation().getPitch());
+
+        player.teleport(location);
     }
 
     public void removeParticipant(GameParticipant participant) {
         waitingParticipants.remove(participant);
         playingParticipants.remove(participant);
-        spectatingParticipants.remove(participant);
+    }
+
+    public void onDeath(GameParticipant killer, GameParticipant victim) {
+        Player killerPlayer = killer.getPlayer();
+        Player victimPlayer = victim.getPlayer();
+
+        GameParticipantStats killerStats = killer.getStats();
+        GameParticipantStats victimStats = victim.getStats();
+
+        killerPlayer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ColorUtil.color("&6LEVEL " + killerStats.incrementLevel())));
+
+        int pointsChange = killerStats.calculatePoints(victim);
+        victimStats.setLevel(0);
+        victimStats.removePoints(pointsChange);
+
+        if (killerStats.addPoints(pointsChange) >= 500) {
+            end(killer);
+            return;
+        }
+
+        killer.setupVisibilityAndTag(this);
+        killer.giveKillReward(ITEMS);
+        setupPlayer(victim.getPlayer());
+
+        Bukkit.getServer().broadcastMessage(ColorUtil.color("&a" + victimPlayer.getName() + " &7was slain by&c " + killerPlayer.getName()));
     }
 
     private int mapSize() {
@@ -146,15 +218,11 @@ public class Game {
         Player player = participant.getPlayer();
         if (player == null) return;
 
-        player.teleport(waitingLocation);
+        GameParticipant.reset(player);
+        player.teleport(WAITING_LOCATION);
 
         participant.setState(GameParticipantState.WAITING);
         waitingParticipants.add(participant);
-    }
-
-    private void addSpectator(GameParticipant participant) {
-        participant.setState(GameParticipantState.SPECTATING);
-        spectatingParticipants.add(participant);
     }
 
     private int getPlayingParticipantsSize() {
@@ -162,14 +230,14 @@ public class Game {
     }
 
     private int getWaitingParticipantsSize() {
-        return playingParticipants.size();
+        return waitingParticipants.size();
     }
 
-    private List<Player> getPlayingParticipants() {
-        return playingParticipants.stream().map(GameParticipant::getPlayer).filter(Objects::isNull).collect(Collectors.toList());
+    private List<Player> getWaitingParticipantsPlayer() {
+        return waitingParticipants.stream().map(GameParticipant::getPlayer).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    private int getRandomNumber(int min, int max) {
-        return (int) ((Math.random() * (max - min)) + min);
+    private List<Player> getPlayingParticipantsPlayer() {
+        return playingParticipants.stream().map(GameParticipant::getPlayer).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

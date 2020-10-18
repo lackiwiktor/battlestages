@@ -91,10 +91,16 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.ThatKawaiiSam</groupId>
-            <artifactId>Assemble</artifactId>
-            <version>105d9baddc</version>
+            <groupId>io.github.thatkawaiisam</groupId>
+            <artifactId>assemble</artifactId>
+            <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.wimbli.WorldBorder</groupId>
+            <artifactId>WorldBorder</artifactId>
+            <version>1.9.10 (beta)</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

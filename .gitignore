@@ -30,7 +30,7 @@ hs_err_pid*
 .idea/**/dictionaries
 .idea/**/shelf
 
-/.idea
+.idea/
 
 # Gradle
 .idea/**/gradle.xml

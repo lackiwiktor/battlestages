@@ -4,5 +4,4 @@ public enum GameParticipantState {
     NONE,
     WAITING,
     PLAYING,
-    SPECTATING
 }

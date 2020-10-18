@@ -1,7 +1,8 @@
-package me.ponktacology.battlestages.participant;
+package me.ponktacology.battlestages.participant.listener;
 
 import lombok.RequiredArgsConstructor;
 import me.ponktacology.battlestages.game.Game;
+import me.ponktacology.battlestages.participant.GameParticipant;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -32,6 +33,7 @@ public class GameParticipantListener implements Listener {
 
         if (participant != null) {
             game.removeParticipant(participant);
+
         }
     }
 }

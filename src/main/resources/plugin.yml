@@ -1,4 +1,4 @@
 name: BattleStages
 version: ${project.version}
 main: me.ponktacology.battlestages.BattleStages
-api-version: 1.16
+api-version: 1.15
