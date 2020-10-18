@@ -50,6 +50,9 @@ public class Game {
     @Configurable(save = true)
     public static Location WAITING_LOCATION = new Location(Bukkit.getWorld("world"), 0, 100, 0, 90F, 90F);
 
+    @Configurable
+    private static int POINTS_TO_WIN = 500;
+
     private final JavaPlugin plugin;
     private final Set<GameParticipant> waitingParticipants = new HashSet<>();
     private final Set<GameParticipant> playingParticipants = new HashSet<>();
@@ -198,7 +201,7 @@ public class Game {
         victimStats.setLevel(0);
         victimStats.removePoints(pointsChange);
 
-        if (killerStats.addPoints(pointsChange) >= 500) {
+        if (killerStats.addPoints(pointsChange) >= POINTS_TO_WIN) {
             end(killer);
             return;
         }
