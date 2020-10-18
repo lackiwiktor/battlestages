@@ -5,7 +5,7 @@ import me.ponktacology.battlestages.participant.GameParticipant;
 
 @Data
 public class GameParticipantStats {
-    private int level;
+    private int level = 1;
     private int points;
 
     public int incrementLevel() {
@@ -25,7 +25,7 @@ public class GameParticipantStats {
     }
 
     public void reset() {
-        level = 0;
+        level = 1;
         points = 0;
     }
 }

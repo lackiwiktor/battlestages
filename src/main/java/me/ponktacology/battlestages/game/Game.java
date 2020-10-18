@@ -198,7 +198,7 @@ public class Game {
         killerPlayer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ColorUtil.color("&6LEVEL " + killerStats.incrementLevel())));
 
         int pointsChange = killerStats.calculatePoints(victim);
-        victimStats.setLevel(0);
+        victimStats.setLevel(1);
         victimStats.removePoints(pointsChange);
 
         if (killerStats.addPoints(pointsChange) >= POINTS_TO_WIN) {
