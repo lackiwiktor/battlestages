@@ -57,11 +57,12 @@ public class Game {
     private final Set<GameParticipant> waitingParticipants = new HashSet<>();
     private final Set<GameParticipant> playingParticipants = new HashSet<>();
     private GameState state = GameState.WAITING_FOR_PLAYERS;
+    private BukkitRunnable gameRunnable;
     private long startTimeStamp;
 
     public void init() {
         state = GameState.WAITING_FOR_PLAYERS;
-        (new BukkitRunnable() {
+        (gameRunnable = new BukkitRunnable() {
             @Override
             public void run() {
                 switch (state) {
@@ -127,6 +128,10 @@ public class Game {
             FireworkUtil.spawnFireworks(winnerPlayer.getLocation(), 30);
         }
 
+        if (gameRunnable != null) {
+            gameRunnable.cancel();
+        }
+
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -156,6 +161,7 @@ public class Game {
                 }
                 break;
             }
+
         }
 
         participant.setupVisibilityAndTag(this);
