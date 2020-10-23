@@ -41,7 +41,7 @@ public class GameScoreboard implements AssembleAdapter {
 
         int place = 1;
         for (GameParticipant topParticipant : game.getPlayingParticipants().stream().sorted((o1, o2) -> -(o1.getStats().getPoints() - o2.getStats().getPoints())).collect(Collectors.toList())) {
-            lines.add("&7" + topParticipant.getStats().getPoints() + " &" + TOP_COLORS[place] + topParticipant.getPlayer().getName());
+            lines.add(ColorUtil.color("&7" + topParticipant.getStats().getPoints() + " &" + TOP_COLORS[place] + topParticipant.getPlayer().getName()));
 
             if (++place == 5) break;
         }
