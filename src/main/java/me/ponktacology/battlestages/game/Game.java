@@ -1,26 +1,33 @@
 package me.ponktacology.battlestages.game;
 
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import me.ponktacology.battlestages.participant.GameParticipant;
 import me.ponktacology.battlestages.participant.GameParticipantState;
 import me.ponktacology.battlestages.participant.stats.GameParticipantStats;
+import me.ponktacology.battlestages.util.ActionBarUtil;
 import me.ponktacology.battlestages.util.ColorUtil;
 import me.ponktacology.battlestages.util.FireworkUtil;
 import me.ponktacology.battlestages.util.ItemStackUtil;
 import me.ponktacology.battlestages.util.MathUtil;
 import me.ponktacology.simpleconfig.config.annotation.Configurable;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.WorldBorder;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import java.util.*;
-import java.util.stream.Collectors;
+import org.github.paperspigot.Title;
 
 @Getter
 @RequiredArgsConstructor
@@ -74,8 +81,11 @@ public class Game {
                         if (getWaitingParticipantsSize() >= MIN_PLAYERS_TO_START) {
                             start();
                         } else {
-                            getWaitingParticipantsPlayer().forEach(player -> player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                                    TextComponent.fromLegacyText(ColorUtil.color("&eWaiting for " + (MIN_PLAYERS_TO_START - getWaitingParticipantsSize()) + " more players before starting..."))));
+                            getWaitingParticipantsPlayer().forEach(player -> ActionBarUtil
+                                .sendActionBarMessage(player, ColorUtil.color(
+                                    "&eOczekiwanie na jeszcze " + (MIN_PLAYERS_TO_START
+                                        - getWaitingParticipantsSize())
+                                        + " graczy...")));
                         }
                         break;
                     }
@@ -92,9 +102,20 @@ public class Game {
                         border.setSize(mapSize() * 2);
                         border.setCenter(GAME_LOCATION.getX(), GAME_LOCATION.getZ());
 
+                        double maxX = GAME_LOCATION.getX() + mapSize();
+                        double minX = GAME_LOCATION.getX() - mapSize();
+
+                        double maxZ = GAME_LOCATION.getZ() + mapSize();
+                        double minZ = GAME_LOCATION.getZ() - mapSize();
+
                         if (oldSize > border.getSize()) {
-                            getPlayingParticipantsPlayer().stream().filter(player -> !border.isInside(player.getLocation())).forEach(player ->
-                                    teleportPlayerToRandomLocation(player));
+                            getPlayingParticipantsPlayer().stream().filter(player -> {
+                                Location location = player.getLocation();
+
+                                return location.getX() > maxX || location.getX() < minX
+                                    || location.getZ() > maxZ || location.getZ() < minZ;
+                            }).forEach(player ->
+                                teleportPlayerToRandomLocation(player));
                         }
                         break;
                     }
@@ -123,7 +144,7 @@ public class Game {
             Player winnerPlayer = winner.getPlayer();
 
             getPlayingParticipantsPlayer().forEach(player ->
-                    player.sendTitle(ColorUtil.color("&a&lGAME ENDED"), ColorUtil.color("&6&l" + winnerPlayer.getName() + " WON!"), 10, 20 * 5, 10));
+                    player.sendTitle(new Title(ColorUtil.color("&a&lGRA SIE ZAKONCZYLA"), ColorUtil.color("&6&l" + winnerPlayer.getName() + " ZWYCIEZYL!"), 10, 20 * 5, 10)));
 
             FireworkUtil.spawnFireworks(winnerPlayer.getLocation(), 30);
         }
@@ -136,7 +157,10 @@ public class Game {
             @Override
             public void run() {
                 waitingParticipants.addAll(playingParticipants);
-                waitingParticipants.forEach(participant -> participant.getStats().reset());
+                waitingParticipants.forEach(participant -> {
+                    participant.getStats().reset();
+                    GameParticipant.reset(participant.getPlayer());
+                });
                 playingParticipants.clear();
                 init();
             }
@@ -157,7 +181,7 @@ public class Game {
                     playingParticipants.add(participant);
                     setupPlayer(player);
                 } else {
-                    player.kickPlayer(ColorUtil.color("&cGame is full."));
+                    player.kickPlayer(ColorUtil.color("&cGra jest pelna."));
                 }
                 break;
             }
@@ -170,7 +194,7 @@ public class Game {
     public void setupPlayer(Player player) {
         GameParticipant.reset(player);
         teleportPlayerToRandomLocation(player);
-        ItemStack item = new ItemStack(Material.WOODEN_SWORD);
+        ItemStack item = new ItemStack(Material.WOOD_SWORD);
         ItemStackUtil.makeUnbreakable(item);
         player.getInventory().addItem(item);
     }
@@ -201,7 +225,7 @@ public class Game {
         GameParticipantStats killerStats = killer.getStats();
         GameParticipantStats victimStats = victim.getStats();
 
-        killerPlayer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ColorUtil.color("&6LEVEL " + killerStats.incrementLevel())));
+        ActionBarUtil.sendActionBarMessage(killerPlayer, ColorUtil.color("&6LEVEL " + killerStats.incrementLevel()));
 
         int pointsChange = killerStats.calculatePoints(victim);
         victimStats.setLevel(1);
@@ -216,7 +240,10 @@ public class Game {
         killer.giveKillReward(ITEMS);
         setupPlayer(victim.getPlayer());
 
-        Bukkit.getServer().broadcastMessage(ColorUtil.color("&a" + victimPlayer.getName() + " &7was slain by&c " + killerPlayer.getName()));
+        killerPlayer.sendTitle(new Title(ColorUtil.color("&aZabiles"), "", 5, 20, 5));
+        victimPlayer.sendTitle(new Title(ColorUtil.color("&cZginales"), "", 5, 20, 5));
+
+        Bukkit.getServer().broadcastMessage(ColorUtil.color("&a" + victimPlayer.getName() + " &7zostal zabity przez&c " + killerPlayer.getName()));
     }
 
     private int mapSize() {

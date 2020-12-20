@@ -1,5 +1,10 @@
 package me.ponktacology.battlestages.participant;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -12,13 +17,12 @@ import me.ponktacology.battlestages.util.MaterialUtil;
 import me.ponktacology.battlestages.util.MathUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-
-import java.util.*;
 
 @Data
 @RequiredArgsConstructor
@@ -59,8 +63,16 @@ public class GameParticipant {
             for (int slot = 0; slot < 4; slot++) {
                 ItemStack[] contents = inventory.getArmorContents();
                 if (inventory.getArmorContents()[slot] != null) {
-                    if (inventory.getArmorContents()[slot].getType().toString().split("_")[1].equals(randomItem.getType().toString().split("_")[1])) {
-                        if (MaterialUtil.isBetterArmor(inventory.getArmorContents()[slot].getType(), randomItem.getType())) {
+                    Material material = inventory.getArmorContents()[slot].getType();
+
+                    if (material == null || material == Material.AIR) {
+                        continue;
+                    }
+
+                    if (inventory.getArmorContents()[slot].getType().toString().split("_")[1]
+                        .equals(randomItem.getType().toString().split("_")[1])) {
+                        if (MaterialUtil.isBetterArmor(inventory.getArmorContents()[slot].getType(),
+                            randomItem.getType())) {
                             contents[slot] = randomItem.clone();
                             inventory.setArmorContents(contents);
                             set = true;
@@ -95,7 +107,12 @@ public class GameParticipant {
             inventory.addItem(randomItem.clone());
         }
 
-        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 20 * 3, 0));
+        if(stats.getLevel() > 5) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 20 * 5, 0));
+        } else {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 20, 2));
+        }
+
     }
 
     public void setupVisibilityAndTag(Game game) {
@@ -106,8 +123,8 @@ public class GameParticipant {
         game.getPlayingParticipants().stream().map(GameParticipant::getPlayer).filter(Objects::nonNull).forEach(it -> {
             NameTag.setup(it, player);
             NameTag.setup(player, it);
-            player.showPlayer(game.getPlugin(), it);
-            it.showPlayer(game.getPlugin(), player);
+            player.showPlayer(it);
+            it.showPlayer(player);
         });
     }
 
@@ -120,7 +137,7 @@ public class GameParticipant {
         player.setCanPickupItems(false);
         player.getOpenInventory().close();
         player.getInventory().clear();
-        player.getInventory().setArmorContents(new ItemStack[]{null, null, null});
+        player.getInventory().setArmorContents(new ItemStack[]{null, null, null, null});
         player.setHealth(20);
         player.setFoodLevel(20);
     }

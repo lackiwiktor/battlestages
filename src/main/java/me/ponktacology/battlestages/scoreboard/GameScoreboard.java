@@ -22,7 +22,7 @@ public class GameScoreboard implements AssembleAdapter {
 
     @Override
     public String getTitle(Player player) {
-        return ColorUtil.color("&6&lBATTLE STAGES");
+        return ColorUtil.color("&6&lxVSx &7BattleStages");
     }
 
     @Override
@@ -33,9 +33,9 @@ public class GameScoreboard implements AssembleAdapter {
 
         GameParticipant participant = GameParticipant.getByPlayer(player);
         GameParticipantStats stats = participant.getStats();
-        lines.add(ColorUtil.color("&fTIME: &6" + TimeUtil.formatTimeMillisToClock(System.currentTimeMillis() - game.getStartTimeStamp())));
-        lines.add(ColorUtil.color("&fLEVEL: &6" + stats.getLevel()));
-        lines.add(ColorUtil.color("&fPOINTS: &6" + stats.getPoints()));
+        lines.add(ColorUtil.color("&fCzas: &6" + TimeUtil.formatTimeMillisToClock(System.currentTimeMillis() - game.getStartTimeStamp())));
+        lines.add(ColorUtil.color("&fPoziom: &6" + stats.getLevel()));
+        lines.add(ColorUtil.color("&fPunkty: &6" + stats.getPoints()));
         lines.add("");
         lines.add(ColorUtil.color("&a&lTOP 5"));
 

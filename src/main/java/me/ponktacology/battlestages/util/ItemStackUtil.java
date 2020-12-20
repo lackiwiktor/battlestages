@@ -7,7 +7,7 @@ public class ItemStackUtil {
 
     public static void makeUnbreakable(ItemStack itemStack) {
         ItemMeta meta = itemStack.getItemMeta();
-        meta.setUnbreakable(true);
+        meta.spigot().setUnbreakable(true);
         itemStack.setItemMeta(meta);
     }
 }

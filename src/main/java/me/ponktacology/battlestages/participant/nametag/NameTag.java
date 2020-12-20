@@ -4,7 +4,10 @@ import me.ponktacology.battlestages.participant.GameParticipant;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.*;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 
 public class NameTag {
 
@@ -31,7 +34,9 @@ public class NameTag {
             Objective objective = player.getScoreboard().getObjective(DisplaySlot.BELOW_NAME);
 
             if (objective == null) {
-                objective = player.getScoreboard().registerNewObjective("showlvl", "dummy", ChatColor.GRAY.toString() + "LEVEL");
+                objective = player.getScoreboard().registerNewObjective("showlvl", "dummy");
+                objective.setDisplayName(ChatColor.GRAY.toString() + "POZIOM");
+                objective.getScore(other.getName()).setScore(1);
                 objective.setDisplaySlot(DisplaySlot.BELOW_NAME);
             }
         } else {

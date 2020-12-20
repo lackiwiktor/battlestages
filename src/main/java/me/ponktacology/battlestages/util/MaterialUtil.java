@@ -22,14 +22,10 @@ public class MaterialUtil {
             case DIAMOND_CHESTPLATE:
             case DIAMOND_LEGGINGS:
             case DIAMOND_BOOTS:
-            case GOLDEN_HELMET:
-            case GOLDEN_CHESTPLATE:
-            case GOLDEN_LEGGINGS:
-            case GOLDEN_BOOTS:
-            case NETHERITE_HELMET:
-            case NETHERITE_CHESTPLATE:
-            case NETHERITE_LEGGINGS:
-            case NETHERITE_BOOTS:
+            case GOLD_HELMET:
+            case GOLD_CHESTPLATE:
+            case GOLD_LEGGINGS:
+            case GOLD_BOOTS:
                 return true;
             default:
                 return false;
@@ -40,10 +36,9 @@ public class MaterialUtil {
         switch (material) {
             case STONE_SWORD:
             case DIAMOND_SWORD:
-            case GOLDEN_SWORD:
+            case GOLD_SWORD:
             case IRON_SWORD:
-            case WOODEN_SWORD:
-            case NETHERITE_SWORD:
+            case WOOD_SWORD:
                 return true;
             default:
                 return false;
@@ -111,13 +106,12 @@ public class MaterialUtil {
 
     public static boolean isBetterSword(Material material, Material material2) {
         switch (material) {
-            case WOODEN_SWORD: {
+            case WOOD_SWORD: {
                 switch (material2) {
                     case DIAMOND_SWORD:
-                    case GOLDEN_SWORD:
+                    case GOLD_SWORD:
                     case IRON_SWORD:
-                    case WOODEN_SWORD:
-                    case NETHERITE_SWORD:
+                    case WOOD_SWORD:
                     case STONE_SWORD:
                         return true;
                     default:
@@ -127,20 +121,18 @@ public class MaterialUtil {
             case STONE_SWORD: {
                 switch (material2) {
                     case DIAMOND_SWORD:
-                    case GOLDEN_SWORD:
+                    case GOLD_SWORD:
                     case IRON_SWORD:
-                    case WOODEN_SWORD:
-                    case NETHERITE_SWORD:
+                    case WOOD_SWORD:
                         return true;
                     default:
                         return false;
                 }
             }
-            case GOLDEN_SWORD: {
+            case GOLD_SWORD: {
                 switch (material2) {
                     case DIAMOND_SWORD:
                     case IRON_SWORD:
-                    case NETHERITE_SWORD:
                         return true;
                     default:
                         return false;
@@ -149,16 +141,12 @@ public class MaterialUtil {
             case IRON_SWORD: {
                 switch (material2) {
                     case DIAMOND_SWORD:
-                    case NETHERITE_SWORD:
                         return true;
                     default:
                         return false;
                 }
             }
             case DIAMOND_SWORD: {
-                return material2 == Material.NETHERITE_SWORD;
-            }
-            case NETHERITE_SWORD: {
                 return true;
             }
             default:

@@ -63,7 +63,7 @@ public class GameSetupCommand {
     @Command(name = "addItem", desc = "Adds item to possible kill rewards.")
     @Require("game.manage")
     public void addItem(@Sender Player sender) {
-        Game.ITEMS.add(sender.getInventory().getItemInMainHand());
+        Game.ITEMS.add(sender.getInventory().getItemInHand());
 
         sender.sendMessage(ColorUtil.color("&aSuccessfully added item."));
     }

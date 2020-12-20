@@ -6,6 +6,7 @@ import me.ponktacology.battlestages.participant.GameParticipant;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -31,9 +32,14 @@ public class GameParticipantListener implements Listener {
         UUID uuid = player.getUniqueId();
         GameParticipant participant = GameParticipant.getParticipants().remove(uuid);
 
+
         if (participant != null) {
             game.removeParticipant(participant);
-
         }
+    }
+
+    @EventHandler
+    public void onPlayerHungerChangeEvent(FoodLevelChangeEvent event) {
+        event.setFoodLevel(20);
     }
 }
